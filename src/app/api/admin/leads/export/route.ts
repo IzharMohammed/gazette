@@ -1,0 +1,4 @@
+import { getAdminSession } from "@/lib/auth";
+import { listLeads } from "@/lib/db";
+function csv(value:unknown){const text=String(value??"");return `"${text.replaceAll('"','""')}"`;}
+export async function GET(){if(!await getAdminSession())return new Response("Unauthorized",{status:401});const leads=await listLeads();const header=["Received","Tracking code","Name","Phone","Email","City","Service","Status","Message"];const rows=leads.map(l=>[l.created_at,l.tracking_code,l.name,l.phone,l.email,l.city,l.service,l.status,l.message]);const body=[header,...rows].map(row=>row.map(csv).join(",")).join("\r\n");return new Response(`\uFEFF${body}`,{headers:{"content-type":"text/csv; charset=utf-8","content-disposition":`attachment; filename="gazette-leads-${new Date().toISOString().slice(0,10)}.csv"`}});}

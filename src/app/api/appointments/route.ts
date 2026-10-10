@@ -1,0 +1,6 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createAppointment } from "@/lib/db";
+
+const schema=z.object({name:z.string().trim().min(2).max(120),phone:z.string().trim().min(7).max(20),email:z.string().email().nullable().optional(),service:z.string().max(160).nullable().optional(),preferred_date:z.string().date(),preferred_time:z.string().regex(/^\d{2}:\d{2}$/),contact_method:z.enum(["phone","whatsapp","email"]),notes:z.string().max(2000).nullable().optional()});
+export async function POST(request:Request){const parsed=schema.safeParse(await request.json());if(!parsed.success)return NextResponse.json({error:"Please check the appointment details."},{status:400});const selected=new Date(`${parsed.data.preferred_date}T${parsed.data.preferred_time}`);if(Number.isNaN(selected.valueOf())||selected<new Date())return NextResponse.json({error:"Please choose a future date and time."},{status:400});try{const item=await createAppointment({...parsed.data,email:parsed.data.email||null,service:parsed.data.service||null,notes:parsed.data.notes||null});return NextResponse.json({id:item.id},{status:201});}catch(error){console.error(error);return NextResponse.json({error:"Could not request the appointment."},{status:500});}}

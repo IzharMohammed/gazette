@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/lib/utils";
 
 const links = [
-  ["Services", "/services"], ["How it works", "/#process"], ["Documents", "/#documents"], ["FAQs", "/#faqs"], ["About", "/about"], ["Contact", "/contact"],
+  ["Services", "/services"], ["Blog", "/blog"], ["Track", "/track"], ["About", "/about"], ["Contact", "/contact"],
 ];
 
 export function Header() {
@@ -18,7 +18,7 @@ export function Header() {
         <nav className="hidden items-center gap-5 lg:flex" aria-label="Main navigation">
           {links.map(([label, href]) => <Link key={label} href={href} className="text-sm font-medium text-[var(--muted)] transition hover:text-[var(--navy)]">{label}</Link>)}
         </nav>
-        <Button asChild variant="gold" className="hidden sm:inline-flex"><Link href="/apply">Apply now</Link></Button>
+        <Button asChild variant="gold" className="hidden sm:inline-flex"><Link href="/appointments">Book appointment</Link></Button>
         <Link href="/services" className="grid size-10 place-items-center rounded-full border border-[var(--line)] lg:hidden" aria-label="Open services"><Menu size={20} /></Link>
       </div>
     </header>

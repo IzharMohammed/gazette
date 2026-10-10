@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { listLeads, type Lead } from "@/lib/db";
+import { AdminDashboard } from "@/components/admin-dashboard";
+import { getSettings, listAppointments, listCmsEntries, listLeads, listMedia, listRedirects } from "@/lib/db";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Lead dashboard", robots: { index: false, follow: false } };
 
 export default async function AdminPage() {
-  let leads: Lead[] = []; let databaseError = false;
-  try { leads = await listLeads(); } catch { databaseError = true; }
-  return <main className="min-h-[75vh] bg-slate-50 py-10"><div className="container-shell"><div className="flex items-end justify-between gap-4"><div><p className="eyebrow">Administration</p><h1 className="display mt-2 text-4xl font-bold text-[var(--navy)]">Enquiries</h1></div><form action="/api/admin/logout" method="post"><button className="text-sm font-bold text-[var(--navy)]">Sign out</button></form></div>{databaseError ? <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">Connect Neon and run the database migration to view leads.</div> : <div className="mt-8 overflow-x-auto rounded-xl border border-slate-200 bg-white"><table className="w-full min-w-[850px] text-left text-sm"><thead className="bg-[var(--navy)] text-white"><tr>{["Received", "Name", "Contact", "Service", "City", "Status"].map(h => <th key={h} className="px-4 py-3">{h}</th>)}</tr></thead><tbody>{leads.map((lead: Awaited<ReturnType<typeof listLeads>>[number]) => <tr key={lead.id} className="border-t border-slate-200"><td className="px-4 py-4 text-xs text-slate-500">{new Date(lead.created_at).toLocaleString("en-IN")}</td><td className="px-4 py-4 font-semibold">{lead.name}</td><td className="px-4 py-4"><a href={`tel:${lead.phone}`}>{lead.phone}</a>{lead.email && <span className="block text-xs text-slate-500">{lead.email}</span>}</td><td className="px-4 py-4">{lead.service}</td><td className="px-4 py-4">{lead.city || "—"}</td><td className="px-4 py-4 capitalize">{lead.status}</td></tr>)}</tbody></table>{leads.length === 0 && <p className="p-8 text-center text-sm text-slate-500">No enquiries yet.</p>}</div>}</div></main>;
+  try {
+    const [leads, content, appointments, redirects, media, settings] = await Promise.all([listLeads(),listCmsEntries(),listAppointments(),listRedirects(),listMedia(),getSettings()]);
+    return <main className="min-h-[75vh] bg-slate-50 py-10"><div className="container-shell"><div className="flex items-end justify-between gap-4"><div><p className="eyebrow">Administration</p><h1 className="display mt-2 text-4xl font-bold text-[var(--navy)]">Website dashboard</h1></div><form action="/api/admin/logout" method="post"><button className="text-sm font-bold text-[var(--navy)]">Sign out</button></form></div><AdminDashboard leads={leads} content={content} appointments={appointments} redirects={redirects} media={media} settings={settings}/></div></main>;
+  } catch { return <main className="container-shell py-20"><h1 className="display text-4xl">Admin setup required</h1><p className="mt-4 rounded-xl bg-amber-50 p-5">Connect Neon and run <code>pnpm db:migrate</code>, then reload this page.</p></main>; }
 }

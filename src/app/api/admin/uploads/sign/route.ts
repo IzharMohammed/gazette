@@ -12,7 +12,8 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Unsupported upload" }, { status: 400 });
   const safeName = parsed.data.filename.replace(/[^a-zA-Z0-9._-]/g, "-").toLowerCase();
   const key = `${parsed.data.folder}/${crypto.randomUUID()}-${safeName}`;
-  const command = new PutObjectCommand({ Bucket: r2Bucket(), Key: key, ContentType: parsed.data.contentType });
+  const visibility = parsed.data.folder === "site-images" ? "public" : "private";
+  const command = new PutObjectCommand({ Bucket: r2Bucket(visibility), Key: key, ContentType: parsed.data.contentType });
   const uploadUrl = await getSignedUrl(r2Client(), command, { expiresIn: 300 });
   return NextResponse.json({ uploadUrl, key, expiresIn: 300 });
 }

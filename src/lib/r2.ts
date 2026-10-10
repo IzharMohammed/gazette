@@ -8,7 +8,8 @@ export function r2Client() {
   return new S3Client({ endpoint, region: process.env.S3_REGION || "auto", credentials: { accessKeyId, secretAccessKey } });
 }
 
-export function r2Bucket() {
-  if (!process.env.S3_BUCKET) throw new Error("S3_BUCKET is not configured");
-  return process.env.S3_BUCKET;
+export function r2Bucket(visibility: "public" | "private" = "private") {
+  const bucket = visibility === "public" ? process.env.R2_PUBLIC_BUCKET : process.env.S3_BUCKET;
+  if (!bucket) throw new Error(`${visibility === "public" ? "R2_PUBLIC_BUCKET" : "S3_BUCKET"} is not configured`);
+  return bucket;
 }
