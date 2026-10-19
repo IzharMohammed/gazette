@@ -13,7 +13,7 @@ const process = [
   ["04", "Receive clear updates", "Stay informed about progress and any further action required from you."],
 ];
 
-export const dynamic="force-dynamic";
+export const revalidate=3600;
 export default async function Home() {
   const [banners,faqs,testimonials,settings]=await Promise.all([listCmsEntries("banner",true),listCmsEntries("faq",true),listCmsEntries("testimonial",true),getSettings()]).catch(()=>[[],[],[],{}] as const);
   const banner=banners[0];

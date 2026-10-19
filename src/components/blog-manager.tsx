@@ -1,0 +1,45 @@
+"use client";
+/* eslint-disable @next/next/no-img-element -- R2 uses a runtime-configured public domain. */
+
+import { useState } from "react";
+import type { CmsEntry } from "@/lib/db";
+
+const field="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/20";
+const publicBase=(process.env.NEXT_PUBLIC_R2_PUBLIC_URL||"").replace(/\/$/,"");
+
+async function request(url:string,options?:RequestInit){const response=await fetch(url,options);const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||"Something went wrong");return data;}
+function slugify(value:string){return value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,180)||"article"}
+function summary(value:string){return value.replace(/\s+/g," ").trim().slice(0,155)}
+
+export function BlogManager({entries,onChange,notify}:{entries:CmsEntry[];onChange:(entries:CmsEntry[])=>void;notify:(message:string)=>void}){
+  const blogs=entries.filter(item=>item.content_type==="blog");
+  const [editing,setEditing]=useState<CmsEntry|null>(null);
+  const [heading,setHeading]=useState("");
+  const [content,setContent]=useState("");
+  const [imageKey,setImageKey]=useState<string|null>(null);
+  const [originalImageKey,setOriginalImageKey]=useState<string|null>(null);
+  const [file,setFile]=useState<File|null>(null);
+  const [preview,setPreview]=useState("");
+  const [busy,setBusy]=useState(false);
+
+  function reset(){setEditing(null);setHeading("");setContent("");setImageKey(null);setOriginalImageKey(null);setFile(null);setPreview("")}
+  function edit(item:CmsEntry){setEditing(item);setHeading(item.title);setContent(item.body||"");setImageKey(item.image_key);setOriginalImageKey(item.image_key);setFile(null);setPreview("");window.scrollTo({top:0,behavior:"smooth"})}
+  function selectImage(selected:File|null){setFile(selected);setPreview(selected?URL.createObjectURL(selected):"")}
+  async function uploadImage(selected:File){const signed=await request("/api/admin/uploads/sign",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({filename:selected.name,contentType:selected.type,folder:"site-images"})});const uploaded=await fetch(signed.uploadUrl,{method:"PUT",headers:{"content-type":selected.type},body:selected});if(!uploaded.ok)throw new Error("The image could not be uploaded. Check the R2 CORS settings.");await request("/api/admin/media",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({key:signed.key,filename:selected.name,contentType:selected.type,size:selected.size,altText:heading})});return signed.key as string}
+  async function removeStoredImage(key:string){await request(`/api/admin/media?key=${encodeURIComponent(key)}`,{method:"DELETE"})}
+  async function save(event:React.FormEvent){event.preventDefault();setBusy(true);try{let finalImage=imageKey;if(file)finalImage=await uploadImage(file);const excerpt=summary(content);const payload={id:editing?.id,content_type:"blog",title:heading.trim(),slug:editing?.slug||slugify(heading),excerpt,body:content.trim(),data:{},image_key:finalImage,seo_title:heading.trim(),meta_description:excerpt,published:true,sort_order:0};const result=await request("/api/admin/content",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});onChange(editing?entries.map(item=>item.id===editing.id?result.item:item):[result.item,...entries]);if(originalImageKey&&originalImageKey!==finalImage)await removeStoredImage(originalImageKey);notify(editing?"Article updated and published.":"Article published successfully.");reset()}catch(error){notify((error as Error).message)}finally{setBusy(false)}}
+  async function publish(item:CmsEntry){try{const result=await request("/api/admin/content",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({...item,published:true})});onChange(entries.map(entry=>entry.id===item.id?result.item:entry));notify("Article is now visible to everyone.")}catch(error){notify((error as Error).message)}}
+  async function remove(item:CmsEntry){if(!confirm(`Delete “${item.title}”? This cannot be undone.`))return;try{await request(`/api/admin/content?id=${item.id}`,{method:"DELETE"});if(item.image_key)await removeStoredImage(item.image_key);onChange(entries.filter(entry=>entry.id!==item.id));if(editing?.id===item.id)reset();notify("Article deleted.")}catch(error){notify((error as Error).message)}}
+
+  const visibleImage=preview||(imageKey&&publicBase?`${publicBase}/${imageKey}`:"");
+  return <section className="mt-6 grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <form onSubmit={save} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="mb-7"><p className="eyebrow">Blog editor</p><h2 className="mt-2 font-serif text-3xl font-bold text-[var(--navy)]">{editing?"Edit article":"Write a new article"}</h2><p className="mt-2 text-sm text-slate-600">The page address and Google search description are created automatically.</p></div>
+      <div className="space-y-6"><label className="block"><span className="mb-2 block text-sm font-bold text-[var(--navy)]">Heading</span><input required maxLength={200} className={field} value={heading} onChange={event=>setHeading(event.target.value)} placeholder="Example: Documents required for a name change Gazette"/></label>
+      <div><span className="mb-2 block text-sm font-bold text-[var(--navy)]">Cover image</span>{visibleImage?<div className="overflow-hidden rounded-2xl border bg-slate-50"><img src={visibleImage} alt="Article cover preview" className="aspect-[16/7] w-full object-cover"/><div className="flex flex-wrap gap-3 p-4"><label className="cursor-pointer rounded-lg border bg-white px-4 py-2 text-sm font-bold">Change image<input type="file" className="sr-only" accept="image/jpeg,image/png,image/webp" onChange={event=>selectImage(event.target.files?.[0]||null)}/></label><button type="button" className="rounded-lg px-4 py-2 text-sm font-bold text-red-700" onClick={()=>{setFile(null);setPreview("");setImageKey(null)}}>Remove image</button></div></div>:<label className="flex cursor-pointer flex-col items-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center transition hover:border-[var(--gold)]"><span className="font-bold text-[var(--navy)]">Choose a cover image</span><span className="mt-1 text-xs text-slate-500">JPG, PNG or WebP · maximum 10 MB</span><input type="file" className="sr-only" accept="image/jpeg,image/png,image/webp" onChange={event=>selectImage(event.target.files?.[0]||null)}/></label>}</div>
+      <label className="block"><span className="mb-2 block text-sm font-bold text-[var(--navy)]">Article content</span><textarea required maxLength={50000} className={`${field} min-h-80 resize-y leading-7`} value={content} onChange={event=>setContent(event.target.value)} placeholder="Write the information you want customers to read…"/><span className="mt-2 block text-right text-xs text-slate-500">{content.length.toLocaleString("en-IN")} characters</span></label></div>
+      <div className="mt-7 flex flex-wrap gap-3"><button disabled={busy} className="rounded-xl bg-[var(--gold)] px-6 py-3 font-bold text-[var(--navy)] shadow-sm disabled:opacity-60">{busy?"Publishing…":editing?"Update and publish":"Publish article"}</button>{editing&&<button type="button" onClick={reset} className="rounded-xl border px-6 py-3 font-bold">Cancel editing</button>}</div>
+    </form>
+    <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><div><p className="eyebrow">Articles</p><h2 className="mt-1 font-serif text-2xl font-bold">Published content</h2></div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold">{blogs.length}</span></div><div className="mt-5 space-y-3">{blogs.map(item=><article key={item.id} className="rounded-xl border p-4"><div className="flex gap-3">{item.image_key&&publicBase&&<img src={`${publicBase}/${item.image_key}`} alt="" className="size-16 rounded-lg object-cover"/>}<div className="min-w-0 flex-1"><h3 className="truncate font-bold text-[var(--navy)]">{item.title}</h3><p className={`mt-1 text-xs font-bold ${item.published?"text-emerald-700":"text-amber-700"}`}>{item.published?"Published":"Draft — not visible publicly"}</p></div></div><div className="mt-4 flex flex-wrap gap-4 text-sm"><button className="font-bold text-[var(--navy)]" onClick={()=>edit(item)}>Edit</button>{!item.published&&<button className="font-bold text-emerald-700" onClick={()=>publish(item)}>Publish</button>}<button className="font-bold text-red-700" onClick={()=>remove(item)}>Delete</button>{item.published&&item.slug&&<a target="_blank" href={`/blog/${item.slug}`} className="font-bold text-slate-600">View ↗</a>}</div></article>)}{blogs.length===0&&<div className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-600">No articles yet. Publish your first article using the form.</div>}</div></aside>
+  </section>
+}

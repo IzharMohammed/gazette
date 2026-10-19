@@ -112,6 +112,7 @@ export async function deleteRedirect(id:string){const sql=database();await sql`d
 
 export async function listMedia(){const sql=database();return sql<MediaItem[]>`select id,object_key,original_name,content_type,visibility,lead_id,alt_text,size_bytes,created_at from media order by created_at desc limit 500`;}
 export async function createMedia(input:{object_key:string;original_name:string;content_type:string;visibility:"public"|"private";lead_id?:string|null;alt_text?:string|null;size_bytes?:number|null}){const sql=database();const rows=await sql<MediaItem[]>`insert into media(object_key,original_name,content_type,visibility,lead_id,alt_text,size_bytes) values(${input.object_key},${input.original_name},${input.content_type},${input.visibility},${input.lead_id||null},${input.alt_text||null},${input.size_bytes||null}) returning *`;return rows[0];}
+export async function deleteMediaByKey(objectKey:string){const sql=database();await sql`delete from media where object_key=${objectKey} and visibility='public'`;}
 
 export async function getSettings():Promise<Record<string,JsonObject>>{const sql=database();const rows=await sql<Array<{key:string;value:JsonObject}>>`select key,value from site_settings`;return Object.fromEntries(rows.map(row=>[row.key,row.value]));}
 export async function setSetting(key:string,value:JsonObject){const sql=database();await sql`insert into site_settings(key,value) values(${key},${sql.json(value)}) on conflict(key) do update set value=excluded.value,updated_at=now()`;}

@@ -6,7 +6,7 @@ import { listCmsEntries } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Gazette and Publication Services", description: "Explore Gazette publication, newspaper notice and gender change documentation assistance." };
 
-export const dynamic="force-dynamic";
+export const revalidate=3600;
 export default async function ServicesPage() {
   let managed:Awaited<ReturnType<typeof listCmsEntries>>=[];try{managed=await listCmsEntries("service",true)}catch{}
   const items=managed.length?managed.map(s=>({slug:s.slug||s.id,title:s.title,description:s.excerpt||s.body||""})):services;

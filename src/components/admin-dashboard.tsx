@@ -2,23 +2,24 @@
 /* eslint-disable @next/next/no-img-element -- R2 uses a runtime-configured custom domain in this admin preview. */
 
 import { useMemo, useState } from "react";
+import { BlogManager } from "@/components/blog-manager";
 import type { Appointment, CmsEntry, ContentType, Lead, MediaItem, RedirectRule } from "@/lib/db";
 
 type Props={leads:Lead[];content:CmsEntry[];appointments:Appointment[];redirects:RedirectRule[];media:MediaItem[];settings:Record<string,Record<string,unknown>>};
-const tabs=["leads","content","media","appointments","redirects","settings"] as const;
+const tabs=["leads","blogs","content","media","appointments","redirects","settings"] as const;
 const input="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";
 const button="rounded-lg bg-[var(--navy)] px-4 py-2 text-sm font-bold text-white disabled:opacity-50";
 const statuses=["new","contacted","documents_pending","in_progress","completed","closed"];
-const contentTypes:ContentType[]=["service","page","faq","testimonial","blog","banner"];
+const contentTypes:ContentType[]=["service","page","faq","testimonial","banner"];
 
 async function api(url:string,options?:RequestInit){const response=await fetch(url,options);const body=await response.json().catch(()=>({}));if(!response.ok)throw new Error(body.error||"Request failed");return body;}
 
 export function AdminDashboard(props:Props){
- const [tab,setTab]=useState<(typeof tabs)[number]>("leads");
+ const [tab,setTab]=useState<(typeof tabs)[number]>("blogs");
  const [leads,setLeads]=useState(props.leads); const [content,setContent]=useState(props.content); const [appointments,setAppointments]=useState(props.appointments); const [redirects,setRedirects]=useState(props.redirects); const [media,setMedia]=useState(props.media);
  const [message,setMessage]=useState("");
  return <><div className="mt-7 flex flex-wrap gap-2">{tabs.map(item=><button key={item} onClick={()=>setTab(item)} className={`rounded-full px-4 py-2 text-sm font-bold capitalize ${tab===item?"bg-[var(--navy)] text-white":"border border-slate-300 bg-white"}`}>{item}</button>)}</div>{message&&<p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{message}</p>}
- {tab==="leads"&&<Leads leads={leads} setLeads={setLeads} setMessage={setMessage}/>} {tab==="content"&&<Content entries={content} setEntries={setContent} setMessage={setMessage}/>} {tab==="media"&&<Media items={media} setItems={setMedia} setMessage={setMessage}/>} {tab==="appointments"&&<Appointments items={appointments} setItems={setAppointments} setMessage={setMessage}/>} {tab==="redirects"&&<Redirects items={redirects} setItems={setRedirects} setMessage={setMessage}/>} {tab==="settings"&&<Settings initial={props.settings} setMessage={setMessage}/>}</>;
+ {tab==="leads"&&<Leads leads={leads} setLeads={setLeads} setMessage={setMessage}/>} {tab==="blogs"&&<BlogManager entries={content} onChange={setContent} notify={setMessage}/>} {tab==="content"&&<Content entries={content.filter(item=>item.content_type!=="blog")} setEntries={updated=>setContent([...content.filter(item=>item.content_type==="blog"),...updated])} setMessage={setMessage}/>} {tab==="media"&&<Media items={media} setItems={setMedia} setMessage={setMessage}/>} {tab==="appointments"&&<Appointments items={appointments} setItems={setAppointments} setMessage={setMessage}/>} {tab==="redirects"&&<Redirects items={redirects} setItems={setRedirects} setMessage={setMessage}/>} {tab==="settings"&&<Settings initial={props.settings} setMessage={setMessage}/>}</>;
 }
 
 function Leads({leads,setLeads,setMessage}:{leads:Lead[];setLeads:(v:Lead[])=>void;setMessage:(v:string)=>void}){const [query,setQuery]=useState("");const [filter,setFilter]=useState("all");const shown=useMemo(()=>leads.filter(l=>(filter==="all"||l.status===filter)&&`${l.name} ${l.phone} ${l.email||""} ${l.tracking_code}`.toLowerCase().includes(query.toLowerCase())),[leads,query,filter]);async function update(id:string,status:string){try{await api("/api/admin/leads",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({id,status})});setLeads(leads.map(l=>l.id===id?{...l,status}:l));}catch(e){setMessage((e as Error).message)}}return <section className="mt-6"><div className="flex flex-wrap gap-3"><input className={`${input} max-w-sm`} placeholder="Search name, phone, email or tracking code" value={query} onChange={e=>setQuery(e.target.value)}/><select className={`${input} max-w-52`} value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">All statuses</option>{statuses.map(s=><option key={s}>{s}</option>)}</select><a className={button} href="/api/admin/leads/export">Export CSV</a></div><Table headings={["Received","Code","Customer","Service","Status"]}>{shown.map(l=><tr key={l.id} className="border-t"><td className="p-3 text-xs">{new Date(l.created_at).toLocaleString("en-IN")}</td><td className="p-3 font-mono text-xs">{l.tracking_code}</td><td className="p-3"><b>{l.name}</b><span className="block text-xs">{l.phone} {l.email&&` · ${l.email}`}</span></td><td className="p-3">{l.service}</td><td className="p-3"><select className={input} value={l.status} onChange={e=>update(l.id,e.target.value)}>{statuses.map(s=><option key={s}>{s}</option>)}</select></td></tr>)}</Table></section>}

@@ -10,7 +10,7 @@ export async function proxy(request: NextRequest) {
     if (!session) return NextResponse.redirect(new URL(`/admin/login?next=${encodeURIComponent(request.nextUrl.pathname)}`, request.url));
   }
   try{
-    if(Date.now()>redirectCache.expires)redirectCache={items:await listRedirects(true),expires:Date.now()+60_000};
+    if(Date.now()>redirectCache.expires)redirectCache={items:await listRedirects(true),expires:Date.now()+300_000};
     const rule=redirectCache.items.find(item=>item.source_path===request.nextUrl.pathname);
     if(rule&&rule.destination_path!==request.nextUrl.pathname){const target=/^https?:\/\//.test(rule.destination_path)?new URL(rule.destination_path):new URL(rule.destination_path,request.url);return NextResponse.redirect(target,rule.permanent?301:307)}
   }catch(error){console.error("Redirect lookup failed",error)}
