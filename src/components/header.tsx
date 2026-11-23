@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ChevronDown,
   Menu,
   Phone,
-  Scale,
   X,
   FileText,
   Newspaper,
@@ -122,18 +122,19 @@ export function Header() {
       <header className="sticky top-0 z-50 border-b border-[var(--line)]/80 bg-white/95 backdrop-blur-md shadow-xs">
         <div className="container-shell flex h-20 items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 shrink-0" aria-label={`${siteConfig.name} Home`}>
-            <div className="grid size-11 place-items-center rounded-xl bg-[var(--navy)] text-[var(--gold-light)] shadow-sm">
-              <Scale size={24} />
-            </div>
-            <div>
-              <span className="block font-serif text-lg md:text-xl font-bold tracking-tight text-[var(--navy)]">
-                {siteConfig.name}
-              </span>
-              <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#8b6828]">
-                Govt Gazette & Legal Services
-              </span>
-            </div>
+          <Link
+            href="/"
+            className="flex items-center shrink-0 transition-opacity hover:opacity-90"
+            aria-label="Gazette360 Publication Services Home"
+          >
+            <Image
+              src="/gazette360-logo.png"
+              alt="Gazette360 Publication Services"
+              width={210}
+              height={70}
+              priority
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Navigation */}

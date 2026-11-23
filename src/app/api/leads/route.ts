@@ -11,6 +11,9 @@ const schema = z.object({
   city: z.string().trim().max(100).optional().or(z.literal("")),
   service: z.string().trim().min(2).max(120),
   message: z.string().trim().max(1200).optional().or(z.literal("")),
+  old_name: z.string().trim().max(100).optional().or(z.literal("")),
+  new_name: z.string().trim().max(100).optional().or(z.literal("")),
+  name_change_type: z.string().trim().max(100).optional().or(z.literal("")),
   company: z.string().max(0).optional(),
 });
 
@@ -20,7 +23,25 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: "Please check the details and try again." }, { status: 400 });
     const data = { ...parsed.data };
     delete data.company;
-    const leadInput = { ...data, email: data.email || null, city: data.city || null, message: data.message || null };
+
+    const details = [
+      data.old_name ? `Old Name: ${data.old_name}` : null,
+      data.new_name ? `New Name: ${data.new_name}` : null,
+      data.name_change_type ? `Type of Name Change: ${data.name_change_type}` : null,
+    ].filter(Boolean).join(" | ");
+
+    const formattedMessage = details
+      ? (data.message ? `${details}\n\n${data.message}` : details)
+      : (data.message || null);
+
+    const leadInput = {
+      name: data.name,
+      phone: data.phone,
+      email: data.email || null,
+      city: data.city || null,
+      service: data.service,
+      message: formattedMessage,
+    };
     const created = await createLead(leadInput);
     try {
       await sendLeadNotification({ ...leadInput, id: created.id, tracking_code: created.tracking_code, status: "new", created_at: new Date().toISOString() });
