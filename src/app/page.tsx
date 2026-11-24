@@ -1,41 +1,344 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Clock3, FileCheck2, MessageCircle, Phone, ShieldCheck, Star } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock3,
+  FileCheck2,
+  MessageCircle,
+  Phone,
+  ShieldCheck,
+  Star,
+  Sparkles,
+  Award,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HeroSlider } from "@/components/hero-slider";
 import { LeadForm } from "@/components/lead-form";
-import { services } from "@/data/services";
-import { siteConfig, whatsappUrl } from "@/lib/utils";
+import { ServiceCardsSection } from "@/components/service-cards-section";
+import { TrustStatsSection } from "@/components/trust-stats-section";
 import { getSettings, listCmsEntries } from "@/lib/db";
+import { siteConfig, whatsappUrl } from "@/lib/utils";
 
-const process = [
-  ["01", "Tell us your requirement", "Choose a service or send an enquiry. We will confirm the applicable process."],
-  ["02", "Share the required details", "Provide only the information and documents needed for the selected service."],
-  ["03", "Review and submission", "Review the prepared details before the relevant publication or submission step."],
-  ["04", "Receive clear updates", "Stay informed about progress and any further action required from you."],
+const processSteps = [
+  {
+    num: "01",
+    title: "Submit Your Requirement",
+    text: "Select your desired service (Name Change, Surname, Gender, or Newspaper notice) and share basic contact details online.",
+  },
+  {
+    num: "02",
+    title: "Drafting & Verification",
+    text: "Our legal specialists formulate the statutory affidavit on stamp paper and format the newspaper notice text for your approval.",
+  },
+  {
+    num: "03",
+    title: "Newspaper & Dossier Submission",
+    text: "We book your advertisement in leading daily newspapers, format the digital CD soft copy, and compile the government submission dossier.",
+  },
+  {
+    num: "04",
+    title: "Receive Published e-Gazette",
+    text: "Once printed by the Department of Publication in New Delhi, we track and deliver your authenticated e-Gazette notification PDF.",
+  },
 ];
 
-export const revalidate=3600;
+export const revalidate = 3600;
+
 export default async function Home() {
-  const [banners,faqs,testimonials,settings]=await Promise.all([listCmsEntries("banner",true),listCmsEntries("faq",true),listCmsEntries("testimonial",true),getSettings()]).catch(()=>[[],[],[],{}] as const);
-  const banner=banners[0];
-  const faqItems=faqs.length?faqs.map(item=>[item.title,item.body||item.excerpt||""]):[["Can the entire process be completed online?", "Many coordination and document-review steps can be handled remotely. Requirements can still vary by authority and service."],["How long does Gazette publication take?", "Processing times are controlled by the relevant authority and can change. We provide an estimate after reviewing the exact requirement."],["Do you guarantee approval or a publication date?", "No. We help prepare and coordinate the process, but decisions and schedules remain with the relevant authority or publisher."],["How will my personal documents be protected?", "Documents are stored privately with restricted, time-limited access and are not exposed through public website URLs."]];
-  const integrations="integrations" in settings?settings.integrations:undefined;
-  const reviewUrl=String(integrations?.google_reviews_url||integrations?.google_business_profile_url||"");
-  return <main>
-    <section className="paper-grid relative overflow-hidden border-b border-[var(--line)] bg-[var(--cream)] py-18 md:py-26"><div className="absolute -right-20 top-10 size-96 rounded-full border-[70px] border-white/45" /><div className="container-shell relative grid items-center gap-12 lg:grid-cols-[1.08fr_.92fr]">
-      <div><p className="eyebrow mb-5">Clear guidance • confidential support</p><h1 className="display max-w-3xl text-5xl font-bold text-[var(--navy)] sm:text-6xl lg:text-7xl">{banner?.title||"Gazette publication, made easier to understand."}</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">{banner?.excerpt||banner?.body||"Professional assistance for name change, newspaper publication and related Gazette documentation—with clear requirements and practical guidance at every step."}</p><div className="mt-8 flex flex-wrap gap-3"><Button asChild variant="gold" size="lg"><Link href="/apply">Start an enquiry <ArrowRight size={18} /></Link></Button><Button asChild variant="outline" size="lg"><a href={whatsappUrl("Hi, I would like guidance about Gazette publication.")}><MessageCircle size={18} />Chat on WhatsApp</a></Button></div><div className="mt-9 flex flex-wrap gap-x-7 gap-y-3 text-sm font-semibold text-[var(--navy)]"><span className="flex items-center gap-2"><ShieldCheck size={17} className="text-[#8b6828]" />Confidential handling</span><span className="flex items-center gap-2"><FileCheck2 size={17} className="text-[#8b6828]" />Document guidance</span><span className="flex items-center gap-2"><Clock3 size={17} className="text-[#8b6828]" />Clear updates</span></div></div>
-      <div className="legal-shadow rounded-3xl border border-white bg-white p-7 sm:p-9"><p className="eyebrow">Request a callback</p><h2 className="display mt-3 text-3xl font-bold text-[var(--navy)]">Tell us what you need help with</h2><p className="mb-6 mt-3 text-sm leading-6 text-[var(--muted)]">Share a few details. No account is required.</p><LeadForm /></div>
-    </div></section>
+  const [faqs, testimonials, settings] = await Promise.all([
+    listCmsEntries("faq", true),
+    listCmsEntries("testimonial", true),
+    getSettings(),
+  ]).catch(() => [[], [], {}] as const);
 
-    <section className="py-20 md:py-26"><div className="container-shell"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="eyebrow">Our services</p><h2 className="display mt-3 text-4xl font-bold text-[var(--navy)] md:text-5xl">Focused help for every step</h2></div><Link href="/services" className="flex items-center gap-2 text-sm font-bold text-[var(--navy)]">View all services <ArrowRight size={16} /></Link></div><div className="mt-10 grid gap-5 md:grid-cols-3">{services.map((service, index) => <article key={service.slug} className="group rounded-2xl border border-[var(--line)] bg-white p-7 transition hover:-translate-y-1 hover:border-[var(--gold)] hover:shadow-xl hover:shadow-slate-200/50"><span className="mb-8 grid size-11 place-items-center rounded-full bg-[var(--cream)] font-serif font-bold text-[#8b6828]">0{index + 1}</span><h3 className="font-serif text-2xl font-bold text-[var(--navy)]">{service.shortTitle}</h3><p className="mt-3 min-h-24 text-sm leading-7 text-[var(--muted)]">{service.description}</p><Link href={`/services/${service.slug}`} className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[var(--navy)]">Understand the process <ArrowRight size={15} className="transition group-hover:translate-x-1" /></Link></article>)}</div></div></section>
+  const faqItems = faqs.length
+    ? faqs.map((item) => [item.title, item.body || item.excerpt || ""] as const)
+    : ([
+        [
+          "Is the Central Gazette notification valid across all Indian states?",
+          "Yes. The Gazette of India is published by the Government of India and holds sovereign statutory validity across all 28 states, 8 Union Territories, central government bodies (MEA, Passport Seva, Railways, UPSC, Defense), and foreign embassies.",
+        ],
+        [
+          "Can the entire procedure be completed 100% online?",
+          "Yes. You share scanned copies of your ID and address proofs through our secure portal. Our team manages affidavit drafting, newspaper ad placement in your home district, and dossier compilation without you needing to travel.",
+        ],
+        [
+          "How long does it take for the Gazette notification to be published?",
+          "Drafting and newspaper publication takes 24 to 48 hours. After submission to the Department of Publication in New Delhi, Part IV of the Gazette of India is typically released within 2 to 4 weeks depending on the government printing schedule.",
+        ],
+        [
+          "Which documents can I update after receiving the Gazette copy?",
+          "With the official Gazette notification, you can update your Indian Passport, Aadhaar Card, PAN Card, Voter ID, Driving License, Bank Accounts, Property Deeds, and Educational Degrees (CBSE, ICSE, University marksheets).",
+        ],
+        [
+          "Why is newspaper publication required before Gazette filing?",
+          "The Department of Publication guidelines mandate that a public notice announcing the change of name must appear in at least one daily newspaper circulated in your district to ensure public notification.",
+        ],
+      ] as const);
 
-    <section id="process" className="bg-[var(--navy)] py-20 text-white md:py-26"><div className="container-shell"><p className="eyebrow !text-[var(--gold-light)]">How it works</p><h2 className="display mt-3 max-w-xl text-4xl font-bold md:text-5xl">A straightforward, guided process</h2><div className="mt-12 grid gap-px overflow-hidden rounded-2xl bg-white/15 md:grid-cols-4">{process.map(([number, title, text]) => <div key={number} className="bg-[var(--navy)] p-7"><span className="font-serif text-3xl text-[var(--gold-light)]">{number}</span><h3 className="mt-7 text-lg font-bold">{title}</h3><p className="mt-3 text-sm leading-6 text-slate-300">{text}</p></div>)}</div></div></section>
+  const integrations = "integrations" in settings ? settings.integrations : undefined;
+  const reviewUrl = String(
+    integrations?.google_reviews_url || integrations?.google_business_profile_url || ""
+  );
 
-    <section id="documents" className="py-20 md:py-26"><div className="container-shell grid gap-12 lg:grid-cols-2"><div><p className="eyebrow">Prepare with confidence</p><h2 className="display mt-3 text-4xl font-bold text-[var(--navy)] md:text-5xl">Know what may be required before you begin</h2><p className="mt-5 max-w-xl leading-8 text-[var(--muted)]">Requirements differ by service, jurisdiction and intended use. We confirm the applicable checklist before asking you to share personal documents.</p><Button asChild variant="outline" className="mt-7"><Link href="/services">Explore requirements</Link></Button></div><div className="grid gap-3 sm:grid-cols-2">{["Identity proof", "Address proof", "Photographs", "Supporting affidavit", "Publication records", "Application details"].map((item) => <div key={item} className="flex items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--cream)] p-4 text-sm font-semibold text-[var(--navy)]"><CheckCircle2 size={18} className="text-[#8b6828]" />{item}</div>)}</div></div></section>
+  return (
+    <main>
+      {/* Requirement 3: Hero Section – Two Image Slider */}
+      <HeroSlider />
 
-    <section id="faqs" className="bg-[var(--cream)] py-20 md:py-26"><div className="container-shell grid gap-10 lg:grid-cols-[.7fr_1.3fr]"><div><p className="eyebrow">Common questions</p><h2 className="display mt-3 text-4xl font-bold text-[var(--navy)]">Helpful answers before you apply</h2></div><div className="space-y-3">{faqItems.map(([q,a]) => <details key={q} className="group rounded-xl border border-[var(--line)] bg-white p-5"><summary className="cursor-pointer list-none font-bold text-[var(--navy)]">{q}<span className="float-right text-xl text-[#8b6828] group-open:rotate-45">+</span></summary><p className="mt-3 pr-8 text-sm leading-7 text-[var(--muted)]">{a}</p></details>)}</div></div></section>
+      {/* Requirement 5: Our Services Section (Two Attractive Cards) */}
+      <ServiceCardsSection />
 
-    {testimonials.length>0&&<section className="py-20"><div className="container-shell"><div className="flex items-end justify-between"><div><p className="eyebrow">Client feedback</p><h2 className="display mt-3 text-4xl font-bold">Testimonials</h2></div>{reviewUrl&&<a href={reviewUrl} target="_blank" rel="noreferrer" className="font-bold text-[var(--navy)]">View Google reviews</a>}</div><div className="mt-8 grid gap-5 md:grid-cols-3">{testimonials.map(item=><blockquote key={item.id} className="rounded-xl border p-6"><Star className="text-[var(--gold)]"/><p className="mt-4 leading-7">{item.body||item.excerpt}</p><footer className="mt-4 font-bold">— {item.title}</footer></blockquote>)}</div></div></section>}
+      {/* Requirement 6: Trust and Statistics Section (Horizontal) */}
+      <TrustStatsSection />
 
-    <section className="py-20"><div className="container-shell rounded-3xl bg-[var(--navy)] px-7 py-12 text-center text-white sm:px-12"><Star className="mx-auto mb-4 text-[var(--gold-light)]" /><h2 className="display text-4xl font-bold">Need clarity before you proceed?</h2><p className="mx-auto mt-4 max-w-xl text-slate-300">Speak with us about the service, documents and next steps relevant to your requirement.</p><div className="mt-7 flex flex-wrap justify-center gap-3"><Button asChild variant="gold"><a href={`tel:${siteConfig.phone.replace(/\s/g, "")}`}><Phone size={17} />Call {siteConfig.phone}</a></Button><Button asChild className="border border-white/25 bg-white/10 hover:bg-white/20"><Link href="/apply">Send an enquiry</Link></Button></div></div></section>
-  </main>;
+      {/* Fast Callback / Quick Form Section */}
+      <section className="paper-grid bg-[var(--cream)] py-16 md:py-24 border-b border-[var(--line)]">
+        <div className="container-shell grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--gold)]/50 bg-[var(--gold)]/15 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-[#8b6828] mb-4">
+              <Sparkles size={14} className="text-[#8b6828]" />
+              <span>Free Legal Consultation</span>
+            </div>
+            <h2 className="display text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--navy)] leading-tight">
+              Get Expert Guidance for Your Gazette Application
+            </h2>
+            <p className="mt-5 text-base sm:text-lg leading-relaxed text-[var(--muted)] max-w-xl">
+              Unsure whether you need a Central Gazette or State Gazette? Our legal documentation specialists verify your requirements, newspaper options, and draft format before any fee is committed.
+            </p>
+
+            <div className="mt-8 space-y-3.5 text-sm font-semibold text-[var(--navy)]">
+              <div className="flex items-center gap-3">
+                <ShieldCheck size={20} className="text-[#8b6828] shrink-0" />
+                <span>100% Confidential handling under restricted access</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <FileCheck2 size={20} className="text-[#8b6828] shrink-0" />
+                <span>Pre-submission compliance check to avoid rejection</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Clock3 size={20} className="text-[#8b6828] shrink-0" />
+                <span>Clear tracking code with WhatsApp updates</span>
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button asChild variant="gold" size="lg" className="font-bold shadow-md">
+                <a href={`tel:${siteConfig.phone.replace(/\s/g, "")}`}>
+                  <Phone size={17} /> Call: {siteConfig.phone}
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="font-bold">
+                <a
+                  href={whatsappUrl("Hi, I want a free consultation about Gazette services.")}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <MessageCircle size={17} className="text-emerald-600" /> WhatsApp
+                </a>
+              </Button>
+            </div>
+          </div>
+
+          {/* Lead Form Box */}
+          <div className="legal-shadow rounded-3xl border border-white bg-white p-7 sm:p-9">
+            <span className="eyebrow">Request A Callback</span>
+            <h3 className="font-serif text-2xl font-bold text-[var(--navy)] mt-1 mb-2">
+              Tell Us What You Need Help With
+            </h3>
+            <p className="text-xs text-[var(--muted)] mb-5">
+              Share basic details below. No account creation required.
+            </p>
+            <LeadForm />
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works (4-Step Process) */}
+      <section id="process" className="bg-[var(--navy)] py-18 text-white md:py-24">
+        <div className="container-shell">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <p className="eyebrow !text-[var(--gold-light)]">Simple & Transparent</p>
+            <h2 className="display mt-2 text-3xl sm:text-4xl md:text-5xl font-bold">
+              How the Process Works
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-300">
+              A straightforward 4-stage pipeline tailored for remote convenience and error-free execution.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {processSteps.map((step) => (
+              <div
+                key={step.num}
+                className="rounded-2xl border border-white/10 bg-white/5 p-7 backdrop-blur-sm transition hover:bg-white/10 hover:border-[var(--gold)]/40"
+              >
+                <span className="font-serif text-3xl font-bold text-[var(--gold-light)]">
+                  {step.num}
+                </span>
+                <h3 className="mt-5 text-lg font-bold text-white">{step.title}</h3>
+                <p className="mt-3 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  {step.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Typical Documents Checklist */}
+      <section id="documents" className="py-18 md:py-24 bg-white">
+        <div className="container-shell grid gap-12 lg:grid-cols-2 items-center">
+          <div>
+            <p className="eyebrow">Document Checklist</p>
+            <h2 className="display mt-2 text-3xl sm:text-4xl font-bold text-[var(--navy)]">
+              Know What is Required Before You Begin
+            </h2>
+            <p className="mt-4 text-base text-[var(--muted)] leading-relaxed">
+              Requirements differ slightly depending on whether you are changing an adult name, minor child name, or modifying a surname. You only need to share scanned copies—our team drafts all legal affidavits, handles stamp duty, and compiles the government proforma.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Button asChild variant="gold" className="font-bold">
+                <Link href="/name-change">View Name Change Details</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/services">All Services Checklist</Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              "Identity Proof (Aadhaar / PAN)",
+              "Address Proof (Utility / Ration)",
+              "Passport-Size Photographs",
+              "Notarized Name Change Affidavit",
+              "Original Daily Newspaper Notice",
+              "Prescribed Proforma & Digital CD",
+            ].map((item) => (
+              <div
+                key={item}
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-[var(--cream)]/50 p-4 text-xs sm:text-sm font-semibold text-[var(--navy)]"
+              >
+                <CheckCircle2 size={18} className="text-[#8b6828] shrink-0" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Frequently Asked Questions */}
+      <section id="faqs" className="bg-[var(--cream)] py-18 md:py-24 border-t border-[var(--line)]">
+        <div className="container-shell grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <p className="eyebrow">Common Questions</p>
+            <h2 className="display mt-2 text-3xl sm:text-4xl font-bold text-[var(--navy)]">
+              Helpful Answers Before You Apply
+            </h2>
+            <p className="mt-4 text-sm text-[var(--muted)] leading-relaxed">
+              Everything you need to know about Gazette legal validity, newspaper rules, and document updates in India.
+            </p>
+            <div className="mt-6">
+              <Link
+                href="/name-change"
+                className="text-xs font-bold text-[#8b6828] hover:text-[var(--navy)] flex items-center gap-1"
+              >
+                More Name Change FAQs →
+              </Link>
+            </div>
+          </div>
+
+          <div className="space-y-3.5">
+            {faqItems.map(([q, a]) => (
+              <details
+                key={q}
+                className="group rounded-2xl border border-[var(--line)] bg-white p-5 transition open:border-[var(--gold)] open:shadow-md"
+              >
+                <summary className="cursor-pointer list-none font-serif text-base font-bold text-[var(--navy)] flex items-center justify-between gap-4">
+                  <span>{q}</span>
+                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-100 text-[#8b6828] group-open:rotate-45 group-open:bg-[var(--gold)] group-open:text-[var(--navy)] transition-transform text-lg">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3.5 text-xs sm:text-sm leading-relaxed text-[var(--muted)] border-t border-slate-100 pt-3">
+                  {a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials (If present in CMS) */}
+      {testimonials.length > 0 && (
+        <section className="py-20 bg-white">
+          <div className="container-shell">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <p className="eyebrow">Client Feedback</p>
+                <h2 className="display mt-2 text-3xl font-bold text-[var(--navy)]">
+                  Verified Client Reviews
+                </h2>
+              </div>
+              {reviewUrl && (
+                <a
+                  href={reviewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-bold text-sm text-[var(--navy)] hover:text-[#8b6828] transition"
+                >
+                  View Google Reviews →
+                </a>
+              )}
+            </div>
+            <div className="grid gap-6 md:grid-cols-3">
+              {testimonials.map((item) => (
+                <blockquote
+                  key={item.id}
+                  className="rounded-2xl border border-slate-200 p-6 bg-slate-50/50"
+                >
+                  <div className="flex gap-1 text-[var(--gold)] mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={15} fill="currentColor" />
+                    ))}
+                  </div>
+                  <p className="text-sm leading-relaxed text-slate-700">
+                    &quot;{item.body || item.excerpt}&quot;
+                  </p>
+                  <footer className="mt-4 font-bold text-xs text-[var(--navy)]">
+                    — {item.title}
+                  </footer>
+                </blockquote>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Bottom CTA Banner */}
+      <section className="py-16 md:py-20">
+        <div className="container-shell rounded-3xl bg-gradient-to-br from-[#0a192f] via-[#102a43] to-[#0d2137] px-7 py-14 text-center text-white sm:px-14 shadow-2xl relative overflow-hidden">
+          <div className="inline-flex size-12 place-items-center rounded-2xl bg-[var(--gold)]/20 text-[var(--gold-light)] mb-4 border border-[var(--gold)]/30">
+            <Award size={24} />
+          </div>
+          <h2 className="display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+            Ready to Legally Change Your Name?
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-slate-300 text-sm sm:text-base leading-relaxed">
+            Speak directly with our legal documentation counselors. We confirm the applicable requirements, spellings, and local newspaper guidelines before any fee is committed.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3.5">
+            <Button asChild variant="gold" size="lg" className="font-bold shadow-md">
+              <a href={`tel:${siteConfig.phone.replace(/\s/g, "")}`}>
+                <Phone size={17} /> Call {siteConfig.phone}
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="border-white/20 bg-white/10 text-white hover:bg-white/20 font-bold">
+              <Link href="/apply">Start Your Application Online</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }
